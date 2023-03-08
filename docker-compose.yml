@@ -14,33 +14,64 @@ services:
   # Le serveur de bases de données mariaDB
   # # Service disponible sur le port 3307
   # ===========================================
-  
+
+  mariadb:
+    image: mariadb
+    ports:
+      - 3307:3306
+    restart: always
+    volumes:
+      - ./bdwp:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    networks:
+      - reseauWP
   # <-------------------------------------- FIN
 
-  
-  
   # ==============================================
   # Construction et démarrage du serveur Web,
   # à partir des fichiers du dossier 'contenu-web'
   # # Service disponible sur le port 80
   # ==============================================
-  
+
+  TP01:
+    image: tp01
+    build: ./contenu-web
+    ports:
+      - 80:80
+    restart: always
+    networks:
+      - reseauWP
   # <-------------------------------------- FIN
-
-
 
   # ===========================================
   # Construction et démarrage de WordPress
   # Service disponible sur le port 88
   # ===========================================
 
-    # Exemple d'utilisation des variables du fichier .env
-    #    environment:
-    #      - WORDPRESS_DB_HOST=${WP_HOST}
-    #      - WORDPRESS_DB_USER=${WP_USER}
-    #      - WORDPRESS_DB_PASSWORD=${WP_PASSWORD}
-    #      - WORDPRESS_DB_NAME=${WP_DB_NAME}
-
+  # Exemple d'utilisation des variables du fichier .env
+  #    environment:
+  #      - WORDPRESS_DB_HOST=${WP_HOST}
+  #      - WORDPRESS_DB_USER=${WP_USER}
+  #      - WORDPRESS_DB_PASSWORD=${WP_PASSWORD}
+  #      - WORDPRESS_DB_NAME=${WP_DB_NAME}
+  wordpress:
+    image: wordpress
+    build: ./wordpress
+    ports:
+      - 88:80
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: ${WP_HOST}
+      WORDPRESS_DB_USER: ${WP_USER}
+      WORDPRESS_DB_PASSWORD: ${WP_PASSWORD}
+      WORDPRESS_DB_NAME: ${WP_DB_NAME}
+      WORDPRESS_TABLE_PREFIX: ${WP_DB_PREFIX}
+    networks:
+      - reseauWP
 
   # <-------------------------------------- FIN
 
@@ -59,17 +90,17 @@ services:
   # Le serveur de base de données postgres
   # Service disponible sur le port 5432
   # ===========================================
-  
-  
-    # <-------------------------------------- FIN
 
-  
-  
+
+  # <-------------------------------------- FIN
+
+
+
   # ===========================================
   # Démarrage de postgresAdmin
   # Service disponible sur le port 81
   # ===========================================
-  
+
 
   # <-------------------------------------- FIN
 
@@ -82,8 +113,7 @@ services:
   # ================================================
   pmm-client-postgres:
     image: "perconalab/pmm-client:dev-latest"
-    container_name: pmm-client-postgres
-      # Voici les variables nécessaires au fonctionnement du client PMM
+    container_name: pmm-client-postgres # Voici les variables nécessaires au fonctionnement du client PMM
     #      - PMM_SERVER=pmm-server:443
     #      - PMM_USER=
     #      - PMM_PASSWORD=
@@ -92,26 +122,42 @@ services:
     #      - DB_PORT=
     #      - DB_USER=${POSTGRES_USER}
     #      - DB_PASSWORD=${POSTGRES_PASSWORD}
-  
-  
-  # <-------------------------------------- FIN
+
+
+    # <-------------------------------------- FIN
 
 
 
-  # ===========================================
-  # Démarrage de phpMyAdmin
-  # Service disponible sur le port 82
-  # ===========================================
+    # ===========================================
+    # Démarrage de phpMyAdmin
+    # Service disponible sur le port 82
+    # ===========================================
     # NOTE: Il ne faut pas utiliser la méthode: PMA_ARBITRARY=1
+  phpmyadmin:
+    image: phpmyadmin
+    depends_on:
+      - mariadb
+    restart: always
+    ports:
+      - 82:80
+    networks:
+      - reseauWP
+    environment:
+      PMA_HOST: mariadb
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    # <-------------------------------------- FIN
 
 
-  # <-------------------------------------- FIN
 
-
-
-# ===========================================
-# Les réseaux de l'application
-# ===========================================
-
+    # ===========================================
+    # Les réseaux de l'application
+    # ===========================================
+networks:
+  reseauWP:
+    name: reseauWP
+    driver: bridge
+  reseauPMM:
+    name: reseauPMM
+    driver: bridge
 
 # <-------------------------------------- FIN
