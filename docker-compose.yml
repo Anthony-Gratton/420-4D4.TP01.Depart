@@ -82,7 +82,17 @@ services:
   # Le serveur d'activités percona PMM
   # Service disponible sur le port 83
   # ===========================================
-
+  pmm-server-postgres:
+    image: percona/pmm-server
+    restart: always
+    ports:
+      - 83:80
+    environment:
+      PMM_AGENT_SERVER_USERNAME: ${PMM_USER}
+      PMM_AGENT_SERVER_PASSWORD: ${PMM_PASS}
+      PMM_AGENT_SERVER_ADDRESS: postgres
+    networks:
+      - reseauPMM
 
   # <-------------------------------------- FIN
 
@@ -90,7 +100,16 @@ services:
   # Le serveur de base de données postgres
   # Service disponible sur le port 5432
   # ===========================================
-
+  postgres:
+    image: postgres
+    ports:
+      - 5432:5432
+    restart: always
+    networks:
+      - reseauPMM
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
   # <-------------------------------------- FIN
 
@@ -100,7 +119,16 @@ services:
   # Démarrage de postgresAdmin
   # Service disponible sur le port 81
   # ===========================================
-
+  postgresAdmin:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - 81:80
+    networks:
+      - reseauPMM
 
   # <-------------------------------------- FIN
 
@@ -114,16 +142,15 @@ services:
   pmm-client-postgres:
     image: "perconalab/pmm-client:dev-latest"
     container_name: pmm-client-postgres # Voici les variables nécessaires au fonctionnement du client PMM
-    #      - PMM_SERVER=pmm-server:443
-    #      - PMM_USER=
-    #      - PMM_PASSWORD=
-    #      - DB_TYPE=postgresql
-    #      - DB_HOST=
-    #      - DB_PORT=
-    #      - DB_USER=${POSTGRES_USER}
-    #      - DB_PASSWORD=${POSTGRES_PASSWORD}
-
-
+    environment:
+      PMM_SERVER: pmm-server:80
+      PMM_USER: ${PMM_USER}
+      PMM_PASSWORD: ${PMM_PASS}
+      DB_TYPE: postgresql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
     # <-------------------------------------- FIN
 
 
